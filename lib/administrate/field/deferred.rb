@@ -25,6 +25,10 @@ module Administrate
         options.fetch(:searchable, deferred_class.searchable?)
       end
 
+      def encrypted?
+        false
+      end
+
       def searchable_field
         options.fetch(:searchable_field)
       end

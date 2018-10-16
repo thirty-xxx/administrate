@@ -16,6 +16,10 @@ module Administrate
         false
       end
 
+      def self.encrypted?
+        false
+      end
+
       def initialize(attribute, data, page, options = {})
         @attribute = attribute
         @data = data

@@ -6,7 +6,7 @@ module Administrate
     def initialize(scoped_resource, dashboard_class, term)
       @dashboard_class = dashboard_class
       @scoped_resource = scoped_resource
-      @term = term
+      @term            = term
     end
 
     def run
@@ -14,22 +14,44 @@ module Administrate
         @scoped_resource.all
       else
         @scoped_resource.joins(tables_to_join).where(query, *search_terms)
+        # resources = resources.where(id: encrypted_resources) if encrypted_attributes.present? && encrypted_resources.present?
+        # resources
       end
     end
 
     private
 
+    def encrypted_resources
+      return @encrypted_resources if @encrypted_resources
+      term_rx = %r{#{@term}}i
+      @encrypted_resources = @scoped_resource.select { |r| encrypted_string(r) =~ term_rx }.map(&:id)
+    end
+
     def query
-      search_attributes.map do |attr|
+      attributes = search_attributes.map do |attr|
         table_name = query_table_name(attr)
         attr_name = column_to_query(attr)
 
         "LOWER(CAST(#{table_name}.#{attr_name} AS CHAR(256))) LIKE ?"
-      end.join(" OR ")
+      end
+      attributes << 'id IN (?)' if encrypted_attributes.present? && encrypted_resources.present?
+      attributes.join(" OR ")
     end
 
     def search_terms
-      ["%#{term.mb_chars.downcase}%"] * search_attributes.count
+      terms = ["%#{term.mb_chars.downcase}%"] * search_attributes.count
+      terms << encrypted_resources if encrypted_attributes.present? && encrypted_resources.present?
+      terms
+    end
+
+    def encrypted_string(instance)
+      encrypted_attributes.map { |a| instance.public_send(a) }.join(' ')
+    end
+
+    def encrypted_attributes
+      attribute_types.keys.select do |attribute|
+        attribute_types[attribute].encrypted?
+      end
     end
 
     def search_attributes

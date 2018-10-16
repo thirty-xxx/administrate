@@ -11,6 +11,7 @@ require "administrate/field/string"
 require "administrate/field/text"
 require "administrate/field/time"
 require "administrate/field/password"
+require "administrate/field/encrypted"
 
 module Administrate
   class BaseDashboard
